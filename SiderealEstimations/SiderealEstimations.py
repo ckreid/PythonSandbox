@@ -10,6 +10,9 @@ import time
 
 from Common import Common, CommonLogging
 
+import logging
+log = logging.getLogger(__name__)
+
 def main():
     pass
 
