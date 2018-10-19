@@ -103,6 +103,3 @@ class GameEndData():
         except Exception as e:
             log.error("ERROR - GameEndData - Exception caught pulling data from filepath [{}]".format(self.sFilepath))
             raise e
-        
-        
-        
