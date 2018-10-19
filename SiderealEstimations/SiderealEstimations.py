@@ -8,7 +8,7 @@ import os
 import sys
 import time
 
-from Common import Common, CommonLogging
+from .Common import Common, CommonLogging
 
 import logging
 log = logging.getLogger(__name__)
