@@ -8,13 +8,23 @@ import os
 import sys
 import time
 
-from .Common import Common, CommonLogging
+import DataManager
+
+from Common import Common, CommonLogging
 
 import logging
-log = logging.getLogger(__name__)
+log = logging.getLogger( __name__ )
 
-def main():
-    pass
+def basicDataDump():
+    sFilepath = os.path.join( Common.sCurrentDirectory, "InputScores" )
+    dataManager = DataManager.GameEndDataManager( sFilepath )
+    if dataManager.m_bIsValid:
+        print( "Average Game Interest: {}".format( dataManager.getAverageGameInterest() ) )
+        print( dataManager.printAllInterestsPerGame() )
+        print( "\nAverage Interest per Faction\n{}".format( dataManager.printAllFactionAverageInterests() ) )
+        print( "\nAverage Game Interest per Faction\n{}".format( dataManager.printAllFactionAverageGameInterests() ) )
+    else:
+        log.error( "ERROR - SiderealEstimations - Input filepath provided has incorrect or no data [{}]".format( sFilepath ) )
 
 if __name__ == "__main__":
     # timestamp to mark the filename
@@ -29,5 +39,4 @@ if __name__ == "__main__":
     # setup logging for this runthrough
     CommonLogging.loggingSetup( sLogDir=sLogDir, sLogName=sLogFileName, sErrorDir=sLogDir, sErrorName=sLogErrorName )
 
-    # TODO: Execute properly
-    sys.exit( main() )
+    sys.exit( basicDataDump() )

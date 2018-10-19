@@ -71,7 +71,7 @@ def configureLogFile( sLogDir, sLogName ):
             os.makedirs( sLogDir )
 
     g_sLogFilePath = os.path.join( sLogDir, sLogName )
-    fh = logging.FileHandler( logFilePath, 'w' )
+    fh = logging.FileHandler( g_sLogFilePath, 'w' )
     fh.setLevel( logging.DEBUG )
     logFormatter = logging.Formatter( FORMAT_LOG )
     fh.setFormatter( logFormatter )
@@ -92,7 +92,7 @@ def configureErrorFile( sErrorDir, sErrorName ):
             os.makedirs( sErrorDir )
 
     g_sErrorFilePath = os.path.join( sErrorDir, sErrorName )
-    ef = logging.FileHandler( errorFilePath, 'w' )
+    ef = logging.FileHandler( g_sErrorFilePath, 'w' )
     ef.setLevel( logging.ERROR )
     errorFormatter = logging.Formatter( FORMAT_ERROR )
     ef.setFormatter( errorFormatter )
