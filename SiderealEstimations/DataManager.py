@@ -28,9 +28,16 @@ class GameEndDataManager():
         # Populate/Verify Member Variables
         if os.path.isdir( sDataInputFolder ):
             for sDataFile in os.listdir( sDataInputFolder ):
-                gameEndData = InputParser.GameEndData( os.path.join( sDataInputFolder, sDataFile ) )
-                if gameEndData.m_bIsValid:
-                    self.m_lGameEndDatas.append( gameEndData )
+                sDataFilepath = os.path.join( sDataInputFolder, sDataFile )
+                if os.path.isdir( sDataFilepath ):
+                    for sFolderDataFile in os.listdir( sDataFilepath ):
+                        gameEndData = InputParser.GameEndData( os.path.join( sDataFilepath, sFolderDataFile ) )
+                        if gameEndData.m_bIsValid:
+                            self.m_lGameEndDatas.append( gameEndData )
+                else:
+                    gameEndData = InputParser.GameEndData( sDataFilepath )
+                    if gameEndData.m_bIsValid:
+                        self.m_lGameEndDatas.append( gameEndData )
         else:
             log.debug( "ERROR - GameEndDataManager - Input folder either does not exist or is not a directory [{}]".format( sDataInputFolder ) )
             self.m_bIsValid = False
@@ -46,7 +53,7 @@ class GameEndDataManager():
         for gameEndData in self.m_lGameEndDatas:
             iValidEntries += 1
             fInterestSum += gameEndData.m_fGameInterest
-        
+
         if iValidEntries > 0:
             return Common.floatround( fInterestSum / iValidEntries, 4 )
         else:
@@ -60,8 +67,8 @@ class GameEndDataManager():
                     factionGameEndDatas.append( factionGameEndData )
 
         return factionGameEndDatas
-    
-    def getGameEndDatasWithFaction(self, sFactionName):
+
+    def getGameEndDatasWithFaction( self, sFactionName ):
         gameEndDatas = []
         for gameEndData in self.m_lGameEndDatas:
             for factionGameEndData in gameEndData.m_lFactionGameEndDatas:
@@ -70,8 +77,8 @@ class GameEndDataManager():
                     break
 
         return gameEndDatas
-    
-    def getFactionAverageInterest(self, sFactionName):
+
+    def getFactionAverageInterest( self, sFactionName ):
         factionGameEndDatas = self.getFactionGameEndDatasWithFaction( sFactionName )
         if not factionGameEndDatas:
             return 0
@@ -81,8 +88,8 @@ class GameEndDataManager():
             fInterest += factionGameEndData.m_fInterest
 
         return Common.floatround( fInterest / len( factionGameEndDatas ), 4 )
-    
-    def getFactionAverageGameInterest(self, sFactionName):
+
+    def getFactionAverageGameInterest( self, sFactionName ):
         gameEndDatas = self.getGameEndDatasWithFaction( sFactionName )
         if not gameEndDatas:
             return 0
@@ -106,7 +113,7 @@ class GameEndDataManager():
 
         return sOutputString
 
-    def printAllFactionAverageInterests(self):
+    def printAllFactionAverageInterests( self ):
         sOutputString = ""
         for i, defaultFactions in enumerate( InputParser.lFactions ):
             fAverageInterest = self.getFactionAverageInterest( defaultFactions[0] )
