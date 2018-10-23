@@ -25,16 +25,33 @@ lFactions = [["Caylion", 15, 7],
 
 sFactionUnknown = "UNKNOWN"
 
+def calculateInterest( fCubeScore, inputFaction ):
+    fInterest = 1.4
+    bConverged = False
+    while not bConverged:
+        fDummyFinalScore = calculateFinalScore( fInterest, inputFaction )
+        if Common.floatround( fDummyFinalScore, 2 ) == fCubeScore:
+            bConverged = True
+
+        fInterest = fInterest + 0.3 * ( ( fCubeScore - fDummyFinalScore ) / fCubeScore )
+
+    return Common.floatround( fInterest, 4 )
+
+def calculateFinalScore( fInterest, inputFaction ):
+    fCubeValue = inputFaction.m_fStartingValue * ( fInterest ** 6 )
+    fProductionValue = inputFaction.m_fProductionValue * ( ( 1 - ( fInterest ** 6 ) ) / ( 1 - fInterest ) )
+    return fCubeValue + fProductionValue
+
 class Faction():
 
-    def __init__( self, sFactionName, dStartingValue, dProductionValue ):
+    def __init__( self, sFactionName, fStartingValue, fProductionValue ):
         '''
         Constructor
         '''
         # Member Variables
         self.m_sFactionName = sFactionName
-        self.m_dStartingValue = float( dStartingValue )
-        self.m_dProductionValue = float( dProductionValue )
+        self.m_fStartingValue = float( fStartingValue )
+        self.m_fProductionValue = float( fProductionValue )
         self.m_bIsValid = True
 
         # Validate Member Variables
@@ -58,12 +75,12 @@ class Faction():
             log.debug( "FAIL - Faction.validate - Invalid due to UKNONWN faction name [{}]".format( self.m_sFactionName ) )
             self.m_bIsValid = False
 
-        if not isinstance( self.m_dStartingValue, float ):
-            log.debug( "FAIL - Faction.validate - Invalid due to starting value not float [{}]".format( self.m_dStartingValue ) )
+        if not isinstance( self.m_fStartingValue, float ):
+            log.debug( "FAIL - Faction.validate - Invalid due to starting value not float [{}]".format( self.m_fStartingValue ) )
             self.m_bIsValid = False
 
-        if not isinstance( self.m_dProductionValue, float ):
-            log.debug( "FAIL - Faction.validate - Invalid due to production value not float [{}]".format( self.m_dProductionValue ) )
+        if not isinstance( self.m_fProductionValue, float ):
+            log.debug( "FAIL - Faction.validate - Invalid due to production value not float [{}]".format( self.m_fProductionValue ) )
             self.m_bIsValid = False
 
         return self.m_bIsValid
@@ -76,8 +93,8 @@ class FactionGameEndData():
         '''
         # Member Variables
         self.m_Faction = Faction.initFromFactionName( sFactionName )
-        self.m_dScore = dScore
-        self.m_dCubeScore = Common.floatround( self.m_dScore * 6, 2 )
+        self.m_fScore = dScore
+        self.m_fCubeScore = Common.floatround( self.m_fScore * 6, 2 )
         self.m_iTimesPlayed = iTimesPlayed
         self.m_bIsValid = True
         self.m_fInterest = 0
@@ -88,27 +105,10 @@ class FactionGameEndData():
             self.m_bIsValid = False
 
         if self.m_bIsValid:
-            self.m_fInterest = self.calculateInterest()
+            self.m_fInterest = calculateInterest( self.m_fCubeScore, self.m_Faction )
 
     def __gt__( self, factionGameEndData ):
         return self.m_Faction.m_sFactionName > factionGameEndData.m_Faction.m_sFactionName
-
-    def calculateInterest( self ):
-        fInterest = 1.4
-        bConverged = False
-        while not bConverged:
-            fDummyFinalScore = self.calculateFinalScore( fInterest )
-            if Common.floatround( fDummyFinalScore, 2 ) == self.m_dCubeScore:
-                bConverged = True
-
-            fInterest = fInterest + 0.3 * ( ( self.m_dCubeScore - fDummyFinalScore ) / self.m_dCubeScore )
-
-        return Common.floatround( fInterest, 4 )
-
-    def calculateFinalScore( self, fInterest ):
-        fCubeValue = self.m_Faction.m_dStartingValue * ( fInterest ** 6 )
-        fProductionValue = self.m_Faction.m_dProductionValue * ( ( 1 - ( fInterest ** 6 ) ) / ( 1 - fInterest ) )
-        return fCubeValue + fProductionValue
 
 class GameEndData():
 
@@ -123,8 +123,10 @@ class GameEndData():
         # Member Variables
         self.m_sFilepath = sFilepath
         self.m_lFactionGameEndDatas = []
-        self.m_fGameInterest = 0
         self.m_iPlayerCount = 0
+        self.m_fGameInterest = 0
+        self.m_fAverageScore = 0
+        self.m_fTimesPlayed = 0
         self.m_bIsValid = True
 
         # Populate/Validate Member Variables
@@ -159,8 +161,16 @@ class GameEndData():
             self.m_lFactionGameEndDatas.sort()
 
         if self.m_bIsValid:
-            fInterestSum = 0
+            fStartCubeSum = 0
+            fStartProductionSum = 0
+            fCubeScoreSum = 0
+            iTimesPlayedSum = 0
             for factionGameEndData in self.m_lFactionGameEndDatas:
-                fInterestSum += factionGameEndData.m_fInterest
-            self.m_fGameInterest = fInterestSum / len( self.m_lFactionGameEndDatas )
+                fStartCubeSum += factionGameEndData.m_Faction.m_fStartingValue
+                fStartProductionSum += factionGameEndData.m_Faction.m_fProductionValue
+                fCubeScoreSum += factionGameEndData.m_fCubeScore
+                iTimesPlayedSum += factionGameEndData.m_iTimesPlayed
             self.m_iPlayerCount = len( self.m_lFactionGameEndDatas )
+            self.m_fGameInterest = calculateInterest( fCubeScoreSum, Faction( "Game", fStartCubeSum, fStartProductionSum ) )
+            self.m_fAverageScore = round( fCubeScoreSum / self.m_iPlayerCount, 3 )
+            self.m_fTimesPlayed = round( iTimesPlayedSum / self.m_iPlayerCount, 2 )

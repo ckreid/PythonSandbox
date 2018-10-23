@@ -50,14 +50,16 @@ class GameEndDataManager():
     def getAverageGameInterest( self ):
         fInterestSum = 0
         iValidEntries = 0
+        fTimesPlayed = 0
         for gameEndData in self.m_lGameEndDatas:
             iValidEntries += 1
             fInterestSum += gameEndData.m_fGameInterest
+            fTimesPlayed += gameEndData.m_fTimesPlayed
 
         if iValidEntries > 0:
-            return Common.floatround( fInterestSum / iValidEntries, 4 )
+            return Common.floatround( fInterestSum / iValidEntries, 4 ), iValidEntries, round( fTimesPlayed / iValidEntries, 2 )
         else:
-            return 0
+            return 0, 0, 0
 
     def getFactionGameEndDatasWithFaction( self, sFactionName ):
         factionGameEndDatas = []
@@ -78,27 +80,33 @@ class GameEndDataManager():
 
         return gameEndDatas
 
-    def getFactionAverageInterest( self, sFactionName ):
+    def getFactionAverageInterestStats( self, sFactionName ):
         factionGameEndDatas = self.getFactionGameEndDatasWithFaction( sFactionName )
+        iNumEntries = len( factionGameEndDatas )
         if not factionGameEndDatas:
             return 0
 
         fInterest = 0
+        iTimesPlayed = 0
         for factionGameEndData in factionGameEndDatas:
             fInterest += factionGameEndData.m_fInterest
+            iTimesPlayed += factionGameEndData.m_iTimesPlayed
 
-        return Common.floatround( fInterest / len( factionGameEndDatas ), 4 )
+        return Common.floatround( fInterest / iNumEntries, 4 ), iNumEntries, round( iTimesPlayed / iNumEntries, 2 )
 
-    def getFactionAverageGameInterest( self, sFactionName ):
+    def getFactionAverageGameInterestStats( self, sFactionName ):
         gameEndDatas = self.getGameEndDatasWithFaction( sFactionName )
+        iNumEntries = len( gameEndDatas )
         if not gameEndDatas:
             return 0
 
         fInterest = 0
+        fTimesPlayed = 0
         for gameEndData in gameEndDatas:
             fInterest += gameEndData.m_fGameInterest
+            fTimesPlayed += gameEndData.m_fTimesPlayed
 
-        return Common.floatround( fInterest / len( gameEndDatas ), 4 )
+        return Common.floatround( fInterest / iNumEntries, 4 ), iNumEntries, round( fTimesPlayed / iNumEntries, 2 )
 
     def printAllInterestsPerGame( self ):
         iGameNumber = 1
@@ -114,21 +122,17 @@ class GameEndDataManager():
         return sOutputString
 
     def printAllFactionAverageInterests( self ):
-        sOutputString = ""
-        for i, defaultFactions in enumerate( InputParser.lFactions ):
-            fAverageInterest = self.getFactionAverageInterest( defaultFactions[0] )
-            if i > 0:
-                sOutputString += "\n"
-            sOutputString += "{:14} - {}".format( defaultFactions[0], fAverageInterest )
+        sOutputString = "{:14} {:8} {:7} {:14}".format( "Faction", "Interest", "Entries", "AvgTimesPlayed" )
+        for defaultFactions in InputParser.lFactions:
+            fAverageInterest, iNumEntries, iAvgTimesPlayed = self.getFactionAverageInterestStats( defaultFactions[0] )
+            sOutputString += "\n{:14}   {:<06} {:7}           {:<04}".format( defaultFactions[0], fAverageInterest, iNumEntries, iAvgTimesPlayed )
 
         return sOutputString
 
     def printAllFactionAverageGameInterests( self ):
-        sOutputString = ""
-        for i, defaultFactions in enumerate( InputParser.lFactions ):
-            fAverageInterest = self.getFactionAverageGameInterest( defaultFactions[0] )
-            if i > 0:
-                sOutputString += "\n"
-            sOutputString += "{:14} - {}".format( defaultFactions[0], fAverageInterest )
+        sOutputString = "{:14} {:8} {:8} {:14}".format( "Faction", "Interest", "Entries", "AvgTimesPlayed" )
+        for defaultFactions in InputParser.lFactions:
+            fAverageInterest, iNumEntries, fAvgTimesPlayed = self.getFactionAverageGameInterestStats( defaultFactions[0] )
+            sOutputString += "\n{:14}   {:<06} {:7}           {:<04}".format( defaultFactions[0], fAverageInterest, iNumEntries, fAvgTimesPlayed )
 
         return sOutputString

@@ -19,7 +19,8 @@ def basicDataDump():
     sFilepath = os.path.join( Common.sCurrentDirectory, "InputScores" )
     dataManager = DataManager.GameEndDataManager( sFilepath )
     if dataManager.m_bIsValid:
-        print( "Average Game Interest: {}".format( dataManager.getAverageGameInterest() ) )
+        fAverageGameInterest, iNumEntries, iTimesPlayed = dataManager.getAverageGameInterest()
+        print( "Average Game Interest: {:6} in {:3} games (Average play times {})".format( fAverageGameInterest, iNumEntries, iTimesPlayed ) )
         print( dataManager.printAllInterestsPerGame() )
         print( "\nAverage Interest per Faction\n{}".format( dataManager.printAllFactionAverageInterests() ) )
         print( "\nAverage Game Interest per Faction\n{}".format( dataManager.printAllFactionAverageGameInterests() ) )
