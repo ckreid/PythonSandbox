@@ -10,6 +10,7 @@ from Common import Common
 import InputParser
 
 import logging
+from InputParser import FactionGameEndData
 log = logging.getLogger( __name__ )
 
 class GameEndDataManager():
@@ -84,29 +85,39 @@ class GameEndDataManager():
         factionGameEndDatas = self.getFactionGameEndDatasWithFaction( sFactionName )
         iNumEntries = len( factionGameEndDatas )
         if not factionGameEndDatas:
-            return 0
+            return 0, 0, 0, 0
 
         fInterest = 0
         iTimesPlayed = 0
+        fScore = 0
         for factionGameEndData in factionGameEndDatas:
             fInterest += factionGameEndData.m_fInterest
             iTimesPlayed += factionGameEndData.m_iTimesPlayed
+            fScore += factionGameEndData.m_fScore
 
-        return Common.floatround( fInterest / iNumEntries, 4 ), iNumEntries, round( iTimesPlayed / iNumEntries, 2 )
+        return Common.floatround( fInterest / iNumEntries, 4 ), Common.floatround( fScore / iNumEntries, 1 ), iNumEntries, round( iTimesPlayed / iNumEntries, 2 )
 
     def getFactionAverageGameInterestStats( self, sFactionName ):
         gameEndDatas = self.getGameEndDatasWithFaction( sFactionName )
         iNumEntries = len( gameEndDatas )
         if not gameEndDatas:
-            return 0
+            return 0, 0, 0, 0
 
         fInterest = 0
         fTimesPlayed = 0
+        fAverageScore = 0
+        fFactionPlusMinus = 0
         for gameEndData in gameEndDatas:
             fInterest += gameEndData.m_fGameInterest
             fTimesPlayed += gameEndData.m_fTimesPlayed
+            fAverageScore += gameEndData.m_fAverageScore
 
-        return Common.floatround( fInterest / iNumEntries, 4 ), iNumEntries, round( fTimesPlayed / iNumEntries, 2 )
+            for factionGameEndData in gameEndData.m_lFactionGameEndDatas:
+                if factionGameEndData.m_Faction.m_sFactionName == sFactionName:
+                    fFactionPlusMinus += factionGameEndData.m_fScore * 6 - gameEndData.m_fAverageScore
+                    break
+
+        return Common.floatround( fInterest / iNumEntries, 4 ), Common.floatround( fFactionPlusMinus / ( iNumEntries * 6 ), 1 ), iNumEntries, round( fTimesPlayed / iNumEntries, 2 )
 
     def printAllInterestsPerGame( self ):
         iGameNumber = 1
@@ -121,18 +132,31 @@ class GameEndDataManager():
 
         return sOutputString
 
+    def printAllScoresPerGame( self ):
+        iGameNumber = 1
+        sOutputString = ""
+        for i, gameEndData in enumerate( self.m_lGameEndDatas ):
+            if i > 0:
+                sOutputString += "\n"
+            sOutputString += "Game {}:".format( iGameNumber )
+            for factionGameEndData in gameEndData.m_lFactionGameEndDatas:
+                sOutputString += " [{}, {}]".format( factionGameEndData.m_Faction.m_sFactionName, Common.floatround( factionGameEndData.m_fScore, 1 ) )
+            iGameNumber += 1
+
+        return sOutputString
+
     def printAllFactionAverageInterests( self ):
-        sOutputString = "{:14} {:8} {:7} {:14}".format( "Faction", "Interest", "Entries", "AvgTimesPlayed" )
+        sOutputString = "{:14} {:8} {:5} {:7} {:14}".format( "Faction", "Interest", "Score", "Entries", "AvgTimesPlayed" )
         for defaultFactions in InputParser.lFactions:
-            fAverageInterest, iNumEntries, iAvgTimesPlayed = self.getFactionAverageInterestStats( defaultFactions[0] )
-            sOutputString += "\n{:14}   {:<06} {:7}           {:<04}".format( defaultFactions[0], fAverageInterest, iNumEntries, iAvgTimesPlayed )
+            fAverageInterest, fAverageScore, iNumEntries, iAvgTimesPlayed = self.getFactionAverageInterestStats( defaultFactions[0] )
+            sOutputString += "\n{:14}   {:<06}  {:4} {:7}           {:<04}".format( defaultFactions[0], fAverageInterest, fAverageScore, iNumEntries, iAvgTimesPlayed )
 
         return sOutputString
 
     def printAllFactionAverageGameInterests( self ):
-        sOutputString = "{:14} {:8} {:8} {:14}".format( "Faction", "Interest", "Entries", "AvgTimesPlayed" )
+        sOutputString = "{:14} {:8}  {:8} {:8} {:14}".format( "Faction", "Interest", "Score+/-", "Entries", "AvgTimesPlayed" )
         for defaultFactions in InputParser.lFactions:
-            fAverageInterest, iNumEntries, fAvgTimesPlayed = self.getFactionAverageGameInterestStats( defaultFactions[0] )
-            sOutputString += "\n{:14}   {:<06} {:7}           {:<04}".format( defaultFactions[0], fAverageInterest, iNumEntries, fAvgTimesPlayed )
+            fAverageInterest, fAverageScore, iNumEntries, fAvgTimesPlayed = self.getFactionAverageGameInterestStats( defaultFactions[0] )
+            sOutputString += "\n{:14}   {:<06}     {:5} {:7}           {:<04}".format( defaultFactions[0], fAverageInterest, fAverageScore, iNumEntries, fAvgTimesPlayed )
 
         return sOutputString
